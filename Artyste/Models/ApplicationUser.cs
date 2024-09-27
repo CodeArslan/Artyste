@@ -13,6 +13,7 @@ namespace Artyste.Models
 		public required string AccountType { get; set; }
 		public string? Gender { get; set; }
 		public string? Description { get; set; }
+		public string? userAvatarUrl { get; set; }
 
 
 	}

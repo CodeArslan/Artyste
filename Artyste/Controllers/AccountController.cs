@@ -20,12 +20,19 @@ namespace Artyste.Controllers
 		private readonly SignInManager<ApplicationUser> _signInManager;
 		private readonly IConfiguration _configuration;
 		private readonly RoleManager<IdentityRole> _roleManager;
+		private readonly string _uploadFolder;
 		public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, RoleManager<IdentityRole> roleManager)
 		{
 			_userManager = userManager;
 			_signInManager = signInManager;
 			_configuration = configuration;
 			_roleManager = roleManager;
+			_uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+
+			if (!Directory.Exists(_uploadFolder))
+			{
+				Directory.CreateDirectory(_uploadFolder);
+			}
 		}
 
 		[HttpPost("Login")]
@@ -173,7 +180,8 @@ namespace Artyste.Controllers
 		   u.Email,
 		   u.Gender,
 		   u.Description,
-		   u.Id
+		   u.Id,
+		   u.userAvatarUrl
 	   })
 	   .FirstOrDefaultAsync();
 
@@ -225,6 +233,61 @@ namespace Artyste.Controllers
 			
 			return NoContent();
 		}
+
+		[HttpPost("image")]
+		[Authorize]
+		public async Task<IActionResult> UploadImage([FromForm] IFormFile avatar)
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+			if (avatar == null || avatar.Length == 0)
+			{
+				return BadRequest("No file uploaded.");
+			}
+
+			var fileExtension = Path.GetExtension(avatar.FileName);
+
+			// Create the file name using the user ID and original extension
+			var fileName = $"{userId}avatar{fileExtension}";
+
+			// Define the directory path for user avatars
+			var userAvatarDirectory = Path.Combine(_uploadFolder, "userAvatar");
+
+			// Ensure the directory exists
+			if (!Directory.Exists(userAvatarDirectory))
+			{
+				Directory.CreateDirectory(userAvatarDirectory);
+			}
+
+			// Combine the directory and file name to create the full file path
+			var filePath = Path.Combine(userAvatarDirectory, fileName);
+
+			using (var stream = new FileStream(filePath, FileMode.Create))
+			{
+				await avatar.CopyToAsync(stream);
+			}
+
+			var imageUrl = $"{Request.Scheme}://{Request.Host}/uploads/userAvatar/{fileName}";
+
+			var user = await _userManager.FindByIdAsync(userId);
+			if (user != null)
+			{
+				user.userAvatarUrl = imageUrl;
+				var result = await _userManager.UpdateAsync(user);
+
+				if (!result.Succeeded)
+				{
+					return BadRequest("Failed to update user avatar URL.");
+				}
+			}
+			else
+			{
+				return NotFound("User not found.");
+			}
+
+			return Ok(new { url = imageUrl });
+		}
+
 
 	}
 }
