@@ -14,7 +14,7 @@ namespace Artyste.Models
 		public string? Gender { get; set; }
 		public string? Description { get; set; }
 		public string? userAvatarUrl { get; set; }
-
+		public string? location { get; set; }
 
 	}
 }

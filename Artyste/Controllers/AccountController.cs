@@ -181,7 +181,8 @@ namespace Artyste.Controllers
 		   u.Gender,
 		   u.Description,
 		   u.Id,
-		   u.userAvatarUrl
+		   u.userAvatarUrl,
+		   u.location
 	   })
 	   .FirstOrDefaultAsync();
 
@@ -213,7 +214,7 @@ namespace Artyste.Controllers
 			user.Gender = model.Gender;
 			user.Email = model.Email;
 			user.Description = model.Description;
-
+			user.location = model.location;
 			var result = await _userManager.UpdateAsync(user);
 			if (result.Succeeded)
 			{
