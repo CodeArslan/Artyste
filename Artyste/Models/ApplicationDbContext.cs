@@ -12,5 +12,8 @@ namespace Artyste.Models
 
 		public DbSet<Services> Services { get; set; }
 		public DbSet<AddOns> AddOns { get; set; }
+		public DbSet<Booking> Bookings { get; set; }
+		public DbSet<BookingHasAddOns> BookingHasAddOns { get; set; }
+		public DbSet<BookingHasServices> BookingHasServices { get; set; }
 	}
 }
