@@ -11,7 +11,8 @@ namespace Artyste.Models
 
 		public required DateTime Time { get; set; }
 
-		public string? Notes { get; set; }
+		public string? NotesFromCustomer { get; set; }
+		public string? NotesFromArtist { get; set; }
 
 		public required string CustomerId { get; set; }
 
@@ -21,7 +22,7 @@ namespace Artyste.Models
 
 		[ForeignKey("ArtistId")]
 		public virtual ApplicationUser? Artist { get; set; }
-
+		public decimal totalPrice {  get; set; }
 		public ICollection<Services> Services { get; set; }
 		public ICollection<AddOns> AddOns { get; set; }
 		public bool IsApproved { get; set; }

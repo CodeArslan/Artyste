@@ -48,10 +48,11 @@ namespace Artyste.Controllers
 				BookingId = newBookingId.ToString("D4"),
 				Date = bookingDto.Date,
 				Time = bookingDto.Time,
-				Notes = bookingDto.Notes,
+				NotesFromCustomer = bookingDto.NotesFromCustomer,
 				CustomerId = customerId,
 				ArtistId = bookingDto.ArtistId,
-				IsApproved = false
+				IsApproved = false,
+				totalPrice = 0
 			};
 
 			// Add Services
@@ -155,16 +156,17 @@ namespace Artyste.Controllers
 			  Time = b.Time.ToString("HH:mm"),
 			  CustomerProfileUrl = b.Customer.userAvatarUrl,
 			  Location = b.Artist.location,
-			  Notes = b.Notes,
+			  NotesFromCustomer = b.NotesFromCustomer,
+			  NotesFromArtist = b.NotesFromArtist,
 			  Services = b.BookingHasServices.Select(bs => new
 			  {
 				  ServiceId = bs.ServiceId,
 				  ServiceName = bs.Service.ServiceName,  
 			  }).ToList(),
-			  AddOns = b.BookingHasAddOns.Select(ba => new
+			  Addon = b.BookingHasAddOns.Select(ba => new
 			  {
-				  AddOnId = ba.AddOnId,
-				  AddOnName = ba.AddOn.name,  
+				  Id = ba.AddOnId,
+				  Name = ba.AddOn.name,  
 			  }).ToList()
 		  })
 		  .FirstOrDefaultAsync();
@@ -176,10 +178,67 @@ namespace Artyste.Controllers
 
 			return Ok(new { success = true, data = booking });
 		}
-	
-}
+		[HttpPost("ConfirmBooking")]
+		public async Task<IActionResult> ConfirmBooking([FromBody] BookingConfirmationDTO bookingDto)
+		{
+			if (bookingDto == null)
+			{
+				return BadRequest("Booking data is required.");
+			}
 
-	
+			var artistId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (string.IsNullOrEmpty(artistId))
+			{
+				return Unauthorized(new { success = false, message = "User is not authenticated." });
+			}
+
+			var booking = await _dbcontext.Bookings.Include(b => b.BookingHasServices)
+													.Include(b => b.BookingHasAddOns)
+													.FirstOrDefaultAsync(b => b.BookingId == bookingDto.bookingId);
+
+			if (booking == null)
+			{
+				return BadRequest(new { success = false, message = "No Booking Found" });
+			}
+			
+			// Update Prices for Services
+			if (bookingDto.services != null && bookingDto.services.Count > 0)
+			{
+				foreach (var service in bookingDto.services)
+				{
+					var bookingService = booking.BookingHasServices.FirstOrDefault(s => s.ServiceId == service.id);
+					if (bookingService != null)
+					{
+						bookingService.Price = service.price; 
+					}
+				}
+			}
+
+			// Update Prices for Add-Ons
+			if (bookingDto.addOns != null && bookingDto.addOns.Count > 0)
+			{
+				foreach (var addOn in bookingDto.addOns)
+				{
+					var bookingAddOn = booking.BookingHasAddOns.FirstOrDefault(a => a.AddOnId == addOn.id);
+					if (bookingAddOn != null)
+					{
+						bookingAddOn.Price = addOn.price; 
+					}
+				}
+			}
+			booking.totalPrice = bookingDto.totalPrice ?? 0;
+			booking.IsApproved = true;
+			booking.NotesFromArtist = bookingDto.notesFromArtist;
+			// Save all changes to the database
+			await _dbcontext.SaveChangesAsync();
+
+			return Ok(new { success = true, message = "Booking prices updated successfully." });
+		}
+
+
+	}
+
+
 	// GET: api/bookings/{id}
 	//[HttpGet("{id}")]
 	//public async Task<ActionResult<BookingDTO>> GetBookingById(int id)
