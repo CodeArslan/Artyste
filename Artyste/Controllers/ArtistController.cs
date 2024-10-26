@@ -23,43 +23,62 @@ namespace Artyste.Controllers
 			_dbcontext = context;
 		}
 		[HttpGet]
+		[AllowAnonymous]
 		public async Task<ActionResult<dynamic>> GetArtists()
 		{
-			// Get the list of users with the "artist" role
-			var roleName = "artist";
-			var artists = new List<dynamic>();
-
-			// Get all users
-			var users = await _userManager.Users.ToListAsync();
-
-			foreach (var user in users)
+			try
 			{
-				// Check if the user is in the "artist" role
-				if (await _userManager.IsInRoleAsync(user, roleName))
+				// Get the list of users with the "artist" role
+				var roleName = "artist";
+				var artists = new List<dynamic>();
+
+				// Get all users
+				var users = await _userManager.Users.ToListAsync();
+
+				foreach (var user in users)
 				{
-					artists.Add(new
+					// Check if the user is in the "artist" role
+					if (await _userManager.IsInRoleAsync(user, roleName))
 					{
-						user.FirstName,
-						user.LastName,
-						user.AccountType,
-						user.PhoneNumber,
-						user.Email,
-						user.Gender,
-						user.Description,
-						user.Id,
-						user.userAvatarUrl
-					});
+						artists.Add(new
+						{
+							user.FirstName,
+							user.LastName,
+							user.AccountType,
+							user.PhoneNumber,
+							user.Email,
+							user.Gender,
+							user.Description,
+							user.Id,
+							user.userAvatarUrl
+						});
+					}
 				}
-			}
 
-			// Check if there are any artists found
-			if (artists == null || !artists.Any())
+				// Check if there are any artists found
+				if (artists == null || !artists.Any())
+				{
+					return NotFound();
+				}
+
+				return Ok(artists);
+			}
+			catch (Exception ex)
 			{
-				return NotFound();
-			}
+				// Log the error details (you can use ILogger here)
+				var errorMessage = $"An error occurred in GetArtists: {ex.Message}";
 
-			return Ok(artists);
+				// You can log the error to the console or use a logging framework
+				Console.WriteLine(errorMessage);
+
+				// Optionally, log the stack trace for more details
+				Console.WriteLine(ex.StackTrace);
+
+				// Return a generic error message
+				return StatusCode(500, new { message = "An error occurred while processing your request.", error = ex.Message });
+			}
 		}
+
 
 		[HttpGet("{id}")]
 		public async Task<ActionResult<ArtistDetailsDTO>> GetArtistById(string id)

@@ -234,7 +234,80 @@ namespace Artyste.Controllers
 
 			return Ok(new { success = true, message = "Booking prices updated successfully." });
 		}
+		[HttpGet("GetBookings")]
+		[Authorize]
+		public async Task<ActionResult<List<object>>> GetBookings()
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (string.IsNullOrEmpty(userId))
+			{
+				return Unauthorized(new { success = false, message = "User is not authenticated." });
+			}
 
+			var bookings = await _dbcontext.Bookings
+	   .Include(b => b.Customer)
+	   .Include(b => b.Artist)
+	   .Where(b => b.CustomerId == userId && b.IsApproved)
+	   .Select(b => new
+	   {
+		   bookingId = b.BookingId,
+		   artistName = b.Artist.FirstName + " " + b.Artist.LastName,
+		   date = b.Date.ToString("yyyy-MM-dd"),
+		   address = b.Customer.location,
+		   time = b.Time.ToString("HH:mm"),
+		   artistAvatarUrl = b.Artist.userAvatarUrl
+	   })
+	   .ToListAsync();
+
+			return Ok(bookings);
+		}
+		[HttpGet("GetOrderById/{bookingId}")]
+		[Authorize]
+		public async Task<ActionResult<List<object>>> GetOrderById(string bookingId)
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (string.IsNullOrEmpty(userId))
+			{
+				return Unauthorized(new { success = false, message = "User is not authenticated." });
+			}
+			var booking = await _dbcontext.Bookings
+		  .Include(b => b.Customer)
+		  .Include(b => b.Artist)
+		  .Include(b => b.BookingHasServices)
+		  .Include(b => b.BookingHasAddOns)
+		  .Where(b => b.BookingId == bookingId)
+		  .Select(b => new
+		  {
+			  bookingId = b.BookingId,
+			  artistName = b.Artist.FirstName + " " + b.Artist.LastName,
+			  Date = b.Date.ToString("yyyy-MM-dd"),
+			  Time = b.Time.ToString("HH:mm"),
+			  artistAddress = b.Artist.location,
+			  NotesFromCustomer = b.NotesFromCustomer,
+			  NotesFromArtist = b.NotesFromArtist,
+			  totalPrice=b.totalPrice,
+			  Services = b.BookingHasServices.Select(bs => new
+			  {
+				  ServiceId = bs.ServiceId,
+				  ServiceName = bs.Service.ServiceName,
+				  Price=bs.Price
+			  }).ToList(),
+			  Addon = b.BookingHasAddOns.Select(ba => new
+			  {
+				  Id = ba.AddOnId,
+				  Name = ba.AddOn.name,
+				  Price=ba.Price
+			  }).ToList()
+		  })
+		  .FirstOrDefaultAsync();
+
+			if (booking == null)
+			{
+				return NotFound(new { success = false, message = "Booking not found." });
+			}
+
+			return Ok(new { success = true, data = booking });
+		}
 
 	}
 

@@ -36,6 +36,7 @@ namespace Artyste.Controllers
 		}
 
 		[HttpPost("Login")]
+		[AllowAnonymous]
 		public async Task<IActionResult> Login([FromBody] Login model)
 		{
 			if (!ModelState.IsValid)

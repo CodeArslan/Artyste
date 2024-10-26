@@ -36,8 +36,8 @@ builder.Services.AddAuthentication(options =>
 		ValidateAudience = true,
 		ValidateLifetime = true,
 		ValidateIssuerSigningKey = true,
-		ValidIssuer = "artyste.versel.app", 
-		ValidAudience = "artyste.versel.app", 
+		ValidIssuer = "http://arslan007-001-site1.ctempurl.com",
+		ValidAudience = "http://arslan007-001-site1.ctempurl.com",
 		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
 	};
 });
