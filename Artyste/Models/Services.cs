@@ -13,9 +13,8 @@ namespace Artyste.Models
 		public required string ServiceName { get; set; }
 
 		
-		public decimal FromPrice { get; set; }
+		public decimal price { get; set; }
 
-		public decimal ToPrice { get; set; }
 
 		[Required(ErrorMessage = "User ID is required.")]
 		public string? UserId { get; set; }

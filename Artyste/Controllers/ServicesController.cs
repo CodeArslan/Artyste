@@ -34,22 +34,22 @@ namespace Artyste.Controllers
 				return Unauthorized(new { success = false, message = "User is not authenticated." });
 			}
 
-				var existingServiceName = await _dbcontext.Services
-	   .Where(s => s.ServiceName.Equals(serviceDto.ServiceName.ToLower()) && s.UserId == userId)
-	   .FirstOrDefaultAsync();
+			var existingServiceName = await _dbcontext.Services
+				.Where(s => s.ServiceName.ToLower() == serviceDto.ServiceName.ToLower()
+							&& s.UserId == userId
+							&& s.ServiceId != serviceDto.ServiceId) 
+				.FirstOrDefaultAsync();
 
-				if (existingServiceName != null)
-				{
-					return Ok(new { success = false, duplicatemessage = "A service with the same name already exists." });
-				}
-			
-			
+			if (existingServiceName != null)
+			{
+				return Ok(new { success = false, duplicatemessage = "A service with the same name already exists." });
+			}
+
 			var service = new Services
 			{
 				ServiceId = serviceDto.ServiceId,
 				ServiceName = serviceDto.ServiceName,
-				FromPrice = serviceDto.FromPrice,
-				ToPrice = serviceDto.ToPrice,
+				price = serviceDto.price,
 				UserId = userId
 			};
 
@@ -60,8 +60,7 @@ namespace Artyste.Controllers
 			if (existingService != null)
 			{
 				existingService.ServiceName = service.ServiceName;
-				existingService.FromPrice = service.FromPrice;
-				existingService.ToPrice = service.ToPrice;
+				existingService.price = service.price;
 
 				_dbcontext.Services.Update(existingService);
 				await _dbcontext.SaveChangesAsync();

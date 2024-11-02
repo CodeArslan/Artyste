@@ -8,10 +8,8 @@ namespace Artyste.DTO
 		[Required(ErrorMessage = "Service Name is required.")]
 		public string ServiceName { get; set; }
 
-		[Required(ErrorMessage = "From Price is required.")]
-		public decimal FromPrice { get; set; }
+		[Required(ErrorMessage = "Price is required.")]
+		public decimal price { get; set; }
 
-		[Required(ErrorMessage = "To Price is required.")]
-		public decimal ToPrice { get; set; }
 	}
 }
