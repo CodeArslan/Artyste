@@ -35,7 +35,8 @@ namespace Artyste.Controllers
 
 			
 				var existingAddOn = await _dbcontext.AddOns
-					.Where(a => a.name==addOnDto.name.ToLower() && a.UserId == userId)
+					.Where(a => a.name==addOnDto.name.ToLower() && a.UserId == userId
+					&& a.Id != addOnDto.Id)
 					.FirstOrDefaultAsync();
 
 				if (existingAddOn != null)
@@ -48,6 +49,7 @@ namespace Artyste.Controllers
 			{
 				Id = addOnDto.Id,
 				name = addOnDto.name,
+				price = addOnDto.price,
 				UserId = userId
 			};
 
@@ -58,7 +60,7 @@ namespace Artyste.Controllers
 			if (existingAddOnEntity != null)
 			{
 				existingAddOnEntity.name = addOn.name;
-
+				existingAddOnEntity.price=addOn.price;
 				_dbcontext.AddOns.Update(existingAddOnEntity);
 				await _dbcontext.SaveChangesAsync();
 
@@ -78,6 +80,10 @@ namespace Artyste.Controllers
 		public async Task<ActionResult<IEnumerable<AddOns>>> GetAddOns()
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (string.IsNullOrEmpty(userId))
+			{
+				return Unauthorized(new { success = false, message = "User is not authenticated." });
+			}
 			var addOns = await _dbcontext.AddOns.Where(a => a.UserId == userId).ToListAsync();
 			return Ok(new
 			{

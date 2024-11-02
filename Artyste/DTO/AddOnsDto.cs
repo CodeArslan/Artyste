@@ -7,7 +7,7 @@ namespace Artyste.DTO
 		public int Id { get; set; }
 		[Required(ErrorMessage = "AddOn Name is required.")]
 		public required string name { get; set; }
-
+		public decimal price { get; set; }
 	}
 
 }

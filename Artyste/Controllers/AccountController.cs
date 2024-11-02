@@ -44,7 +44,6 @@ namespace Artyste.Controllers
 				return BadRequest(ModelState);
 			}
 
-			// Fetch the user by phone number
 			var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == model.phone);
 
 			if (user == null)
@@ -52,15 +51,12 @@ namespace Artyste.Controllers
 				return Unauthorized("Invalid phone number.");
 			}
 
-			// Check if the password is correct
 			var result = await _signInManager.CheckPasswordSignInAsync(user, model.password, lockoutOnFailure: false);
 
 			if (result.Succeeded)
 			{
-				// Generate the JWT token
 				var token = GenerateJwtToken(user);
 
-				// Return the token along with user information
 				return Ok(new
 				{
 					token,
@@ -90,7 +86,6 @@ namespace Artyste.Controllers
 			var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
 			var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-			// Set the expiration time to a very long duration (e.g., 100 years)
 			var expirationTime = DateTime.UtcNow.AddYears(100); // Change as needed
 
 			var token = new JwtSecurityToken(
@@ -170,6 +165,10 @@ namespace Artyste.Controllers
 		public async Task<ActionResult<dynamic>> GetUserById()
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (string.IsNullOrEmpty(userId))
+			{
+				return Unauthorized(new { success = false, message = "User is not authenticated." });
+			}
 			var user = await _userManager.Users
 	   .Where(u => u.Id == userId)
 	   .Select(u => new
@@ -249,19 +248,15 @@ namespace Artyste.Controllers
 
 			var fileExtension = Path.GetExtension(avatar.FileName);
 
-			// Create the file name using the user ID and original extension
 			var fileName = $"{userId}avatar{fileExtension}";
 
-			// Define the directory path for user avatars
 			var userAvatarDirectory = Path.Combine(_uploadFolder, "userAvatar");
 
-			// Ensure the directory exists
 			if (!Directory.Exists(userAvatarDirectory))
 			{
 				Directory.CreateDirectory(userAvatarDirectory);
 			}
 
-			// Combine the directory and file name to create the full file path
 			var filePath = Path.Combine(userAvatarDirectory, fileName);
 
 			using (var stream = new FileStream(filePath, FileMode.Create))

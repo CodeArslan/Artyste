@@ -15,6 +15,7 @@ namespace Artyste.Models
 
 		[ForeignKey("UserId")]
 		public virtual ApplicationUser? User { get; set; }
+		public decimal price { get; set; }
 
 	}
 }
